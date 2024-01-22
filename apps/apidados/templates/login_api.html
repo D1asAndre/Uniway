@@ -1,0 +1,89 @@
+<!-- login_api.html -->
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Serviço de Autenticação Web</title>
+    <link rel="stylesheet" type="text/css" href="//static.ua.pt/idp/main.min.css?20170731">
+    <style>
+        [_nghost-ng-c4214649903] {
+            font-family: Open Sans, sans-serif;
+            color: #121212;
+        }
+
+        body {
+            background-image: url('https://static.ua.pt/idp/bg/b/003-min.jpg');
+        }
+
+        #container {
+            font-family: Open Sans, sans-serif;
+            color: #121212;
+        }
+
+        #header {
+            text-align: center;
+        }
+
+        .content {
+            margin: 20px;
+        }
+
+        .row {
+            margin-bottom: 15px;
+        }
+
+        #btnLogin {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="header">
+            <img src="https://static.ua.pt/idp/logo/ua.gif" alt="Universidade de Aveiro">
+        </div>
+        <div class="content">
+            <div class="margin-bottom">
+                <p>
+                    Está a aceder ao serviço:<br>
+                    <span class="service-name">elearning.ua.pt</span>
+                </p>
+            </div>
+            <div class="error">
+                {% if error_message %}
+                    <p>{{ error_message }}</p>
+                {% endif %}
+            </div>
+            <form id="loginForm" action="{% url 'login_api' %}" method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <label for="email">Utilizador</label>
+                    <input class="form-element form-field" id="email" name="email" type="text" value="{{ form.email.value }}">
+                </div>
+                <div class="row">
+                    <label for="password">Palavra-passe</label>
+                    <input class="form-element form-field" id="password" name="password" type="password" value="">
+                </div>
+
+                <div class="row">
+                    <button id="btnLogin" class="form-element form-button" name="submit" type="submit" onclick="this.childNodes[0].nodeValue='A autenticar, por favor aguarde...'">Autenticar</button>
+                </div>
+            </form>
+            <div class="clear-both"></div>
+        </div>
+        <div id="footer"></div>
+        <div class="funding">
+            <a href="http://www.poci-compete2020.pt" target="_blank" class="compete"><img src="https://static.ua.pt/idp/logo/compete.gif" alt="Compete 2020"></a>
+        </div>
+        <div id="info" class="hidden">
+            <div class="close">X</div>
+            <div class="title">Aviso legal</div>
+            <div class="clear-both"></div>
+            <div class="margin-top">
+                <a href="https://www.ua.pt/privacypolicy" style="color:#fff;text-decoration:underline" target="_blank">Política de Privacidade</a> (abre uma nova janela)
+            </div>
+        </div>
+    </div>
+</body>
+</html>

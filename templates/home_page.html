@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+	{% block content %}
+
+		<style>
+			input[type="text"],
+			input[type="date"],
+			input[type="time"],
+			input[type="number"],
+			select {
+				width: 20%;
+				padding: 8px;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				box-sizing: border-box;
+    		}
+		</style>
+
+		<div class="text">Boleias</div>
+		<br>
+		<div class="filtro">
+			<form method="get" action="{% url 'addboleia:home_page' %}">
+				<label for="destino">Filtrar por Destino:</label>
+				<select name="destino" id="destino">
+					<option value="" {% if not destino_filtrado %}selected{% endif %}>Todas as Boleias</option>
+					{% for destino in destinos %}
+						<option value="{{ destino }}" {% if destino == destino_filtrado %}selected{% endif %}>{{ destino }}</option>
+					{% endfor %}
+				</select>
+				<label style="margin-left: 90px;" for="data">Filtrar por Data:</label>
+				<input type="date" name="data" id="data" value="{{ data_filtrada }}" >				
+				
+				<input style="float: right;" class="botao-tabela-cinza" type="submit" value="Filtrar">			
+			</form>
+		</div>
+		<br>
+		<br>
+
+
+		
+		<div id="mapas-tabelas-container">
+			{% for boleia in boleias_existente %}
+				<div class="mapa-tabela-container">
+					<div class="map-container" id="map-container-{{ forloop.counter }}"></div>
+	
+					<div  class="text-body" id="tabela-{{ forloop.counter }}">
+						<div class="info-row" style="text-align: left; width: 800px; height: 40px;" >
+							<strong>Origem:</strong>
+							{{ boleia.origem }}
+							<br>
+							<strong>Destino:</strong>
+							{{ boleia.destino }}
+						</div>
+						<div class="info-row" style="text-align: right;">
+							<strong>Hora:</strong>
+							{{ boleia.hora }}
+							<br>
+							<strong>Data:</strong>
+							{{ boleia.data }}
+						</div>
+						
+						<div class="info-row" style="text-align: center;">
+							<strong>Vagas disponíveis:</strong>
+							{{ boleia.vagas_disponiveis_na_pagina_principal }}
+						</div>
+						<br>
+						<div class="button-row" style="text-align: right;">
+							<!-- <a href="{% url 'addboleia:detalhes_boleia' boleia.id %}">Ver mais</a> -->
+							<button class="botao-tabela" onclick="window.location.href='{% url 'definition:perfil_usuario' boleia.user.username %}'">Ver Perfil</button>
+							{% if user.id != boleia.user.id %}
+                                <button class="botao-tabela" onclick="tenhoInteresse('{{ boleia.id }}')">Tenho Interesse</button>
+                            {% endif %}
+
+							{% if user.id != boleia.user.id %}
+								<button class="botao-tabela" onclick="onButtonClick('{{ user.id }}', '{{ boleia.user.user_id }}')">Abrir Chat</button>
+							{% endif %}
+							{% if user.id == boleia.user.id %}
+								<button class="botao-tabela cancelar-boleia-btn" data-boleia-id="{{ boleia.id }}">Cancelar Boleia</button>
+								<button class="botao-tabela finalizar-boleia-btn" data-boleia-id="{{ boleia.id }}">Finalizar Boleia</button>
+							{% endif %}
+						</div>
+					</div>
+				</div>
+				<br>
+			{% endfor %}
+		</div>
+
+
+		<script>
+		
+			function onButtonClick(userId, boleiaUserId) {
+				console.log("Button clicked!");
+				
+				$.ajax({
+					url: "{% url 'room:create_chat_room' %}",
+					method: 'POST',
+					data: {
+						'boleia_id': boleiaUserId,
+						'session_id': userId,
+						'csrfmiddlewaretoken': '{{ csrf_token }}'
+					},
+				})
+				.done(function (data) {
+					console.log("Chat room created successfully!", data);
+					console.log("Redirecting to:", data.room_url);
+					if (data.room_url) {
+						window.location.href = data.room_url;
+					}
+				})
+				
+				.fail(function (jqXHR, textStatus, errorThrown) {
+					console.error("Error creating chat room:", textStatus, errorThrown);
+					alert("Error creating chat room: " + textStatus);
+				});
+			}
+			
+			// Aguardar o carregamento da página
+			document.addEventListener("DOMContentLoaded", function () {
+				// Aguardar a API do Google Maps ser carregada
+				var script = document.createElement('script');
+				script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyA5T5hTNTE_29t3Hdilo470G35BpBzan4s&libraries=places&callback=inicializarMapas';
+				script.async = true;
+				script.defer = true;
+
+				// Adicionar o script ao cabeçalho do documento
+				document.head.appendChild(script);
+			});
+
+			// Função chamada quando a API do Google Maps for carregada
+			function inicializarMapas() {
+				// Dados das boleias
+				var boleiasExistente = [
+					{% for boleia in boleias_existente %}
+						{ origem: '{{ boleia.origem }}', destino: '{{ boleia.destino }}' }{% if not forloop.last %},{% endif %}
+					{% endfor %}
+				];
+
+				boleiasExistente.forEach(function (boleia, index) {
+					// Chamar função para inicializar o mapa e adicionar a rota
+					inicializarMapa(boleia.origem, boleia.destino, index + 1);
+				});
+			}
+
+			function inicializarMapa(origem, destino, mapaNumero) {
+				var geocoder = new google.maps.Geocoder();
+
+				// Geocodificação da origem
+				geocoder.geocode({ address: origem }, function (resultsOrigem, statusOrigem) {
+					if (statusOrigem === google.maps.GeocoderStatus.OK) {
+						var origemLat = resultsOrigem[0].geometry.location.lat();
+						var origemLng = resultsOrigem[0].geometry.location.lng();
+
+						// Geocodificação do destino
+						geocoder.geocode({ address: destino }, function (resultsDestino, statusDestino) {
+							if (statusDestino === google.maps.GeocoderStatus.OK) {
+								var destinoLat = resultsDestino[0].geometry.location.lat();
+								var destinoLng = resultsDestino[0].geometry.location.lng();
+
+								// Criar um novo elemento div para o contêiner do mapa
+								var mapContainer = document.getElementById('map-container-' + mapaNumero);
+								var mapaDiv = document.createElement('div');
+								mapaDiv.id = 'map' + mapaNumero;
+								mapaDiv.style.height = '300px';  // Defina a altura desejada para o mapa
+								mapContainer.appendChild(mapaDiv);
+
+								var mapa = new google.maps.Map(mapaDiv, {
+									center: { lat: origemLat, lng: origemLng },
+									zoom: 10,
+								});
+
+								// Adicionar marcadores
+								var origemMarker = new google.maps.Marker({ position: { lat: origemLat, lng: origemLng }, map: mapa, title: 'Origem' });
+								var destinoMarker = new google.maps.Marker({ position: { lat: destinoLat, lng: destinoLng }, map: mapa, title: 'Destino' });
+
+								// Adicionar rota
+								adicionarRota(origemLat, origemLng, destinoLat, destinoLng, mapa);
+							}
+						});
+					}
+				});
+			}
+
+			function adicionarRota(origemLat, origemLng, destinoLat, destinoLng, mapa) {
+				var directionsService = new google.maps.DirectionsService();
+				var directionsRenderer = new google.maps.DirectionsRenderer();
+				
+				// Configurar o renderizador no mapa específico
+				directionsRenderer.setMap(mapa);
+				
+				var request = {
+					origin: { lat: origemLat, lng: origemLng },
+					destination: { lat: destinoLat, lng: destinoLng },
+					travelMode: 'DRIVING'
+				};
+				
+				// Fazer a solicitação para obter as direções
+				directionsService.route(request, function(result, status) {
+					if (status == 'OK') {
+						// Renderizar a rota no mapa
+						directionsRenderer.setDirections(result);
+					}
+				});
+			}
+
+
+			//-------------------Cravoo-------------------
+			$(document).ready(function () {
+				$('.cancelar-boleia-btn').on('click', function () {
+					var boleiaId = $(this).data('boleia-id');
+					
+					// Use SweetAlert2 para exibir um pop-up de confirmação personalizado
+					Swal.fire({
+						title: 'Tem a certeza que quer cancelar a boleia?',
+						icon: 'warning',
+						showCancelButton: true,
+						confirmButtonText: 'Sim',
+						cancelButtonText: 'Não',
+					}).then((result) => {
+						if (result.isConfirmed) {
+							// Se o usuário clicar em "Sim", faça a chamada AJAX
+							$.ajax({
+								url: "/addboleia/cancelar_boleia_ajax/" + boleiaId + "/",  
+								method: 'POST',
+								data: {
+									'boleiaId': boleiaId,
+									'csrfmiddlewaretoken': '{{ csrf_token }}'
+								},
+								dataType: 'json',
+								success: function (data) {
+									if (data.success) {
+										Swal.fire('Boleia cancelada com sucesso!', '', 'success');
+										location.reload();  // Recarregar a página após o cancelamento
+									} else {
+										Swal.fire('Falha ao cancelar a boleia', data.message, 'error');
+									}
+								},
+								error: function (jqXHR, textStatus, errorThrown) {
+									console.error("Error durante a solicitação AJAX:", textStatus, errorThrown);
+									Swal.fire('Erro durante a solicitação AJAX', 'Consulte o console para mais informações.', 'error');
+								}
+							});
+						}
+					});
+				});
+			});
+
+
+			$('.finalizar-boleia-btn').on('click', function () {
+				var boleiaId = $(this).data('boleia-id');
+			
+				// Use SweetAlert2 para exibir um pop-up de confirmação personalizado
+				Swal.fire({
+					title: 'Ja chegou ao seu destino?',
+					icon: 'warning',
+					showCancelButton: true,
+					confirmButtonText: 'Sim',
+					cancelButtonText: 'Não',
+				}).then((result) => {
+					if (result.isConfirmed) {
+						// Se o usuário clicar em "Sim", faça a chamada AJAX
+						$.ajax({
+							url: "/addboleia/finalizar_boleia_ajax/" + boleiaId + "/",  
+							method: 'POST',
+							data: {
+								'boleiaId': boleiaId,
+								'csrfmiddlewaretoken': '{{ csrf_token }}'
+							},
+							dataType: 'json',
+							success: function (data) {
+								if (data.success) {
+									Swal.fire('Boleia finalizada com sucesso!', '', 'success');
+									location.reload();  // Recarregar a página após a finalização
+								} else {
+									Swal.fire('Falha ao finalizar a boleia', data.message, 'error');
+								}
+							},
+							error: function (jqXHR, textStatus, errorThrown) {
+								console.error("Error durante a solicitação AJAX:", textStatus, errorThrown);
+								Swal.fire('Erro durante a solicitação AJAX', 'Consulte o console para mais informações.', 'error');
+							}
+						});
+					}
+				});
+			});
+			//-------------------Cravoo-------------------
+
+			function showConfirmation() {
+				Swal.fire({
+					title: 'Pedido enviado!',
+					text: 'Aguarde a resposta do motorista.',
+					icon: 'success',
+					confirmButtonText: 'OK'
+				});
+			}
+			
+			function showErrorMessage(message) {
+				Swal.fire({
+					title: 'Erro!',
+					text: message,
+					icon: 'error',
+					confirmButtonText: 'OK'
+				});
+			}
+
+			function tenhoInteresse(boleiaId) {
+				// Faça uma requisição AJAX para a sua view
+				$.ajax({
+					url: '{% url "addboleia:tenho_interesse_boleia" 0 %}'.replace('0', boleiaId),
+					type: 'GET',  // Ou 'POST' dependendo da sua implementação
+					dataType: 'json',
+					success: function (data) {
+						// Manipule a resposta da view
+						if (data.success) {
+							showConfirmation();
+						} else {
+							showErrorMessage(data.message);
+						}
+					},
+					error: function (xhr, status, error) {
+						// Em caso de erro na requisição AJAX
+						showErrorMessage('Ocorreu um erro na solicitação.');
+					}
+				});
+			}
+			
+		</script>
+		
+		
+
+	{% endblock %}

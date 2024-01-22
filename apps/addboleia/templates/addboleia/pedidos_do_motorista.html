@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+    .table-container {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #ddd;
+        margin-left: 50px;
+        margin-right: 50px;
+    }
+
+    .header-row {
+        display: flex;
+        background-color: #f2f2f2;
+        padding: 10px;
+    }
+
+    .table-row {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #ddd;
+    }
+
+    .table-cell {
+        flex: 1;
+    }
+
+    .lista-boleias {
+        text-align: center;
+        padding: 20px;
+        margin-left: 50px; /* Ajuste aqui conforme necessário */
+        margin-right: 50px; /* Ajuste aqui conforme necessário */
+        border-radius: 6px;
+        background-color: #ffffff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<!-- Pedidos Pendentes -->
+<div class="text">Pedidos Pendentes</div>
+<h2></h2>
+{% if pedidos_pendentes %}
+    <div class="table-container filtro">
+        <div class="header-row">
+            <div class="table-cell">Passageiro</div>
+            <div class="table-cell">Origem</div>
+            <div class="table-cell">Destino</div>
+            <div class="table-cell">Data</div>
+            <div class="table-cell">Hora</div>
+            <div class="table-cell">Vagas Disponíveis</div>
+            <div class="table-cell">Vagas Ocupadas</div>
+            <div class="table-cell">Status</div>
+            <div class="table-cell">Ação</div> 
+        </div>
+        {% for pedido in pedidos_pendentes %}
+            <div class="table-row">
+                <div class="table-cell">{{ pedido.passageiro.username }}</div>
+                <div class="table-cell">{{ pedido.boleia.origem }}</div>
+                <div class="table-cell">{{ pedido.boleia.destino }}</div>
+                <div class="table-cell">{{ pedido.boleia.data }}</div>
+                <div class="table-cell">{{ pedido.boleia.hora }}</div>
+                <div class="table-cell">{{ pedido.boleia.vagas_disponiveis }}</div>
+                <div class="table-cell">{{ pedido.boleia.vagas_ocupadas }}</div>
+                <div class="table-cell">pendente</div>
+                <div class="table-cell">
+                    <form method="post" action="{% url 'addboleia:pedidos_do_motorista' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="aceitar">
+                        <input type="hidden" name="boleia_id" value="{{ pedido.boleia.id }}">
+                        <input type="hidden" name="passageiro_id" value="{{ pedido.passageiro.id }}">
+                        <button type="submit" class="botao-tabela">Aceitar</button>
+                    </form>
+              <br>
+                    <form method="post" action="{% url 'addboleia:pedidos_do_motorista' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="recusar">
+                        <input type="hidden" name="boleia_id" value="{{ pedido.boleia.id }}">
+                        <input type="hidden" name="passageiro_id" value="{{ pedido.passageiro.id }}">
+                        <button type="submit" class="botao-tabela-red">Recusar</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="lista-boleias">Não há pedidos pendentes.</p>
+{% endif %}
+<br>
+<!-- Pedidos Aceitos -->
+<div class="text">Pedidos Aceites</div>
+{% if pedidos_aceitos %}
+    <div class="table-container filtro">
+        <div class="header-row">
+            <div class="table-cell">Passageiro</div>
+            <div class="table-cell">Origem</div>
+            <div class="table-cell">Destino</div>
+            <div class="table-cell">Data</div>
+            <div class="table-cell">Hora</div>
+            <div class="table-cell">Vagas Disponíveis</div>
+            <div class="table-cell">Vagas Ocupadas</div>
+            <div class="table-cell">Status</div>
+        </div>
+        {% for pedido in pedidos_aceitos %}
+            <div class="table-row">
+                <div class="table-cell">{{ pedido.passageiro.username }}</div>
+                <div class="table-cell">{{ pedido.boleia.origem }}</div>
+                <div class="table-cell">{{ pedido.boleia.destino }}</div>
+                <div class="table-cell">{{ pedido.boleia.data }}</div>
+                <div class="table-cell">{{ pedido.boleia.hora }}</div>
+                <div class="table-cell">{{ pedido.boleia.vagas_disponiveis }}</div>
+                <div class="table-cell">{{ pedido.boleia.vagas_ocupadas }}</div>
+                <div class="table-cell">Aceito</div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="lista-boleias">Não há pedidos aceites.</p>
+{% endif %}
+<br>
+<!-- Pedidos Recusados -->
+<div class="text">Pedidos Recusados</div>
+{% if pedidos_recusados %}
+    <div class="table-container filtro">
+        <div class="header-row">
+            <div class="table-cell">Passageiro</div>
+            <div class="table-cell">Origem</div>
+            <div class="table-cell">Destino</div>
+            <div class="table-cell">Data</div>
+            <div class="table-cell">Hora</div>
+            <div class="table-cell">Vagas Disponíveis</div>
+            <div class="table-cell">Vagas Ocupadas</div>
+            <div class="table-cell">Status</div>
+        </div>
+        {% for pedido in pedidos_recusados %}
+            <div class="table-row">
+                <div class="table-cell">{{ pedido.passageiro.username }}</div>
+                <div class="table-cell">{{ pedido.boleia.origem }}</div>
+                <div class="table-cell">{{ pedido.boleia.destino }}</div>
+                <div class="table-cell">{{ pedido.boleia.data }}</div>
+                <div class="table-cell">{{ pedido.boleia.hora }}</div>
+                <div class="table-cell">{{ pedido.boleia.vagas_disponiveis }}</div>
+                <div class="table-cell">{{ pedido.boleia.vagas_ocupadas }}</div>
+                <div class="table-cell">Recusado</div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="lista-boleias">Não há pedidos recusados.</p>
+{% endif %}
+
+{% endblock %}

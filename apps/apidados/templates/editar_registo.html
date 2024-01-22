@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Registo{% endblock %}
+
+{% block content %}
+    <h2>Editar Registo</h2>
+
+    <form method="post" action="{% url 'editar_registro' num_mec=num_mec|default:''  %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Salvar Alterações</button>
+    </form>
+
+    <p><a href="{% url 'listar_registo' %}">Cancelar e Voltar para a Página de Listar</a></p>
+{% endblock %}
