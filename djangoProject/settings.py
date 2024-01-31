@@ -33,7 +33,10 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*','uniway.gis4cloud.com']
+
+CSRF_TRUSTED_ORIGINS = ['https://uniway.gis4cloud.com','https://*.127.0.0.1']
+
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
@@ -190,3 +193,6 @@ EMAIL_HOST_PASSWORD = 'Projeto.Psi.2023'  # Senha do seu email do Outlook
 DEFAULT_FROM_EMAIL = 'uniway@outlook.pt'  # Endereço de email padrão
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
