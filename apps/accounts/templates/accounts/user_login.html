@@ -1,0 +1,94 @@
+{% extends 'baselogin.html' %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<style>
+    .container {
+        display: flex;
+        align-items: center;
+    }
+
+    .line1, .line2 {
+        flex-grow: 1;
+        height: 1px;
+        background-color: #000;
+    }
+
+    .line1 {
+        margin-left: 0px;
+    }
+
+    .line2 {
+        margin-right: 0px;
+    }
+
+    .or {
+        margin: 0 10px;
+    }
+
+    .login__boxi {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .login__outlook-icon {
+        position: absolute;
+        left: 25px;
+    }
+
+    .line1, .line2 {
+        border-top: 1px solid #16725D;
+    }
+
+    .login__forms a {
+        text-decoration: none;
+        color: #A49EAC;
+    }
+</style>
+
+<div class="login__forms">
+    <form action="." method="post" autocomplete="off" class="login__registre" id="login-in">
+        {% csrf_token %}
+        <h1 class="login__title">Log In</h1>
+
+        <div class="login__box">
+            <i class='bx bx-user login__icon'></i>
+            <input type="text" placeholder="E-mail or Username" name="username" class="login__input">
+        </div>
+
+        <div class="login__box">
+            <i class='bx bx-lock-alt login__icon'></i>
+            <input type="password" placeholder="Password" name="password" class="login__input">
+        </div>
+
+        <a href="{% url 'reset_password' %}" class="login__forgot">Esqueceu-se da password?</a>
+
+        {% if messages %}
+        <p class="messages">
+            {% for message in messages %}
+        <p{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+        {% endfor %}
+        </p>
+        {% endif %}
+
+        <br>
+        <button type="submit" class="botao-tabela">Entrar</button>
+        <br><br>
+
+        <div class="container">
+            <div class="line1"></div>
+            <div class="or">or</div>
+            <div class="line2"></div>
+        </div>
+
+        <a href="/api/login/">
+            <div class="login__boxi">
+                {% load static %}
+                <img src="{% static 'accounts/img/UA_Logo.png' %}" alt="logo" class="login__outlook-icon">
+                <div class="text">Universidade de Aveiro</div>
+            </div>
+        </a>
+    </form>
+</div>
+{% endblock %}

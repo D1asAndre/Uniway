@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+	<meta charset="UTF-8">
+	<title>Página Inicial</title>
+	<link rel="stylesheet" href="{% static 'accounts/css/homepage.css' %}">
+    <link rel="icon" href="{% static 'accounts/img/UniwayFaviconLogo.png' %}" type="image/x-icon">
+	<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+	<!-- ===== Boxicons CSS ===== -->
+    <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
+    
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>  
+</head>
+<body class="text-bg-dark">
+
+
+	<nav class="sidebar close">
+        <header>
+            <a href="{% url 'addboleia:home_page' %}?destino=">
+                <div class="image-text">
+                    <span class="image">
+                        <img src="{% static 'accounts/img/UniwayFaviconLogo.png' %}" alt="">
+                    </span>
+            
+                    <div class="text logo-text">
+                        <span class="name">Uniway</span>
+                        <span class="profession">{{ request.user.username }}</span>
+                    </div>
+                </div>
+            </a>
+
+            <i class='bx bx-chevron-right toggle'></i>
+        </header>
+
+        <div class="menu-bar">
+            <div class="menu">
+                <!--
+                <li class="search-box">
+                    <i class='bx bx-search icon'></i>
+                    <form method="get" action="{% url 'definition:search_users' %}">
+                        {{ form.as_p }}
+                        <input type="submit" placeholder="Search..."> 
+                    </form>
+                </li>
+				
+                <input type="text" placeholder="Search...">
+-->
+                <!--
+                <li class="search-box">
+                    <form method="get" action="{% url 'definition:search_users' %}">
+                        {{ form.as_p }}
+                        <button type="submit">Pesquisar</button>
+                    </form>
+                </li>
+                -->
+
+                <ul class="menu-links">
+                    <li class="nav-link">
+                        <a href="{% url 'definition:view_profile' %}">
+                            <i class='bx bxs-user-account icon' ></i>
+                            <span class="text nav-text">Meu Perfil</span>
+                        </a>
+                        
+                    </li>
+
+                    <li class="nav-link">
+                        <a href="{% url 'definition:search_users' %}">
+                            <i class='bx bx-search-alt-2 icon' ></i>
+                            
+                            <span class="text nav-text">Utilizadores</span>
+                        </a>
+                        
+                    </li>
+
+                    <li class="nav-link">
+                        <a href="{% url 'addboleia:agendar_boleia' %}">
+                            <i class='bx bx-calendar-plus icon' ></i>
+                            <span class="text nav-text">Agendar Boleia</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-link">
+                        <a href="{% url 'addboleia:pedidos_do_passageiro' %}">
+                            <i class='bx bx-bell icon'></i>
+                            <span class="text nav-text">Meus Pedidos</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-link">
+                        <a href="{% url 'addboleia:pedidos_do_motorista' %}">
+                            <i class='bx bx-bell icon'></i>
+                            <span class="text nav-text">Pedidos Condutor</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-link">
+                        <a href="{% url 'room:accessible_rooms' %}">
+                            <i class='bx bx-chat icon' ></i>
+                            <span class="text nav-text">Mensagens</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-link">
+                        <a href="{% url 'addboleia:historico_motorista' %}">
+                            <i class='bx bx-history icon' ></i>
+                            <span class="text nav-text">Histórico Condutor</span>
+                        </a>
+                    </li>
+					<li class="nav-link">
+                        <a href="{% url 'addboleia:historico_passageiro' %}">
+                            <i class='bx bx-history icon' ></i>
+                            <span class="text nav-text">Histórico Passageiro</span>
+                        </a>
+                    </li>                    
+                    {% if user.is_superuser %}
+
+                    <li class="nav-link">
+                        <a href="{% url 'dashboard:indexDash' %}">
+                            <i class='bx bx-line-chart icon' ></i>
+                            <span class="text nav-text">Dashboard</span>
+                        </a>
+                    </li>  
+                    {% endif %}                    
+                </ul>
+            </div>
+
+            <div class="bottom-content">
+                <li class="">
+                    <a href="{% url 'user_logout' %}">
+                        <i class='bx bx-log-out icon' ></i>
+                        <span class="text nav-text">Logout</span>
+                    </a>
+                </li>
+
+                <li class="mode">
+                    <div class="sun-moon">
+                        <i class='bx bx-moon icon moon'></i>
+                        <i class='bx bx-sun icon sun'></i>
+                    </div>
+                    <span class="mode-text text">Dark mode</span>
+
+                    <div class="toggle-switch">
+                        <span class="switch"></span>
+                    </div>
+                </li>
+                
+            </div>
+        </div>
+
+    </nav>
+
+    <section class="home">
+        {% block content %}{% endblock %}
+    </section>
+
+    {% block scripts %}{% endblock %}
+    
+    <script src="{% static 'accounts/js/homepage.js' %}"></script>
+</body>
+</html>

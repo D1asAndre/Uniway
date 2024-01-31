@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Criar Registo{% endblock %}
+
+{% block content %}
+    <form method="post" action="{% url 'criar_registo' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Enviar</button>
+    </form>
+{% endblock %}

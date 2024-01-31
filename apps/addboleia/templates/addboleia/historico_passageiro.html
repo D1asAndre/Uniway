@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+    .table-container {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #ddd;
+        margin-left: 50px;
+        margin-right: 50px;
+    }
+
+    .header-row {
+        display: flex;
+        background-color: #f2f2f2;
+        padding: 10px;
+    }
+
+    .table-row {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #ddd;
+    }
+
+    .table-cell {
+        flex: 1;
+    }
+
+    .lista-boleias {
+        text-align: center;
+        padding: 20px;
+        margin-left: 50px; /* Ajuste aqui conforme necessário */
+        margin-right: 50px; /* Ajuste aqui conforme necessário */
+        border-radius: 6px;
+        background-color: #ffffff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<!-- Boleias Aceitas -->
+<div class="text">Boleias Aceites</div>
+{% if historico_passageiro_aceitas %}
+    <div class="table-container">
+        <div class="header-row">
+            <div class="table-cell">Condutor</div>
+            <div class="table-cell">Origem</div>
+            <div class="table-cell">Destino</div>
+            <div class="table-cell">Data</div>
+            <div class="table-cell">Hora</div>
+        </div>
+        {% for boleia_aceita in historico_passageiro_aceitas %}
+            <div class="table-row">
+                <div class="table-cell">{{ boleia_aceita.condutor }}</div>
+                <div class="table-cell">{{ boleia_aceita.origem }}</div>
+                <div class="table-cell">{{ boleia_aceita.destino }}</div>
+                <div class="table-cell">{{ boleia_aceita.data }}</div>
+                <div class="table-cell">{{ boleia_aceita.hora }}</div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="lista-boleias">Nenhuma boleia aceite.</p>
+{% endif %}
+<br>
+<!-- Boleias Recusadas -->
+<div class="text">Boleias Recusadas</div>
+{% if historico_passageiro_recusadas %}
+    <div class="table-container">
+        <div class="header-row">
+            <div class="table-cell">Condutor</div>
+            <div class="table-cell">Origem</div>
+            <div class="table-cell">Destino</div>
+            <div class="table-cell">Data</div>
+            <div class="table-cell">Hora</div>
+        </div>
+        {% for boleia_recusada in historico_passageiro_recusadas %}
+            <div class="table-row">
+                <div class="table-cell">{{ boleia_recusada.condutor }}</div>
+                <div class="table-cell">{{ boleia_recusada.origem }}</div>
+                <div class="table-cell">{{ boleia_recusada.destino }}</div>
+                <div class="table-cell">{{ boleia_recusada.data }}</div>
+                <div class="table-cell">{{ boleia_recusada.hora }}</div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="lista-boleias">Nenhuma boleia recusada.</p>
+{% endif %}
+
+{% endblock %}

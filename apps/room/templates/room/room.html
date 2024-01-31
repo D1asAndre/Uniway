@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+    {% block title %}{{ room.name }} | {% endblock %}
+
+    {% block content %}
+
+    <style>
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        #chat-messages {
+            max-height: 417px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            text-align: left;
+            padding: 20px;
+            margin-left: 50px;
+            margin-right: 50px;
+            border-radius: 6px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #chat-message-input {
+            width: 83%;
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 6px;
+            margin-left: 50px;
+        }
+
+        #chat-message-submit {
+            width: 10%;
+            padding: 10px;
+            font-size: 16px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 50px;
+            float: right; /* Adiciona o botão à direita */
+
+        }
+
+        #chat-form {
+            display: flex;
+            justify-content: space-between;
+        }
+        .message {
+            padding: 2px;
+            margin-bottom: 10px;
+        }
+        
+        .right {
+            text-align: right;
+        }
+        
+        .left {
+            text-align: left;
+        }
+    </style>
+
+    <div class="text">
+        {% if room.user1 == request.user %}{{ room.user2.username }}{% else %}{{ room.user1.username }}{% endif %}
+    </div>
+    <br>
+    <br>
+
+    
+    <div id="chat-messages">
+        {% for m in messages %}
+            {% if m.user == request.user %}
+                <div class="message right">
+                    <b>{{ m.user.username }}</b>: {{ m.content }}<br>
+                </div>
+            {% else %}
+                <div class="message left">
+                    <b>{{ m.user.username }}</b>: {{ m.content }}<br>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    
+
+    <div>
+        <form method="post" action="." class="flex">
+            <input type="text" name="content" class="flex-1 mr-3" placeholder="Your message..." id="chat-message-input">
+
+            <button class="botao-tabela-branco" id="chat-message-submit">Submit</button>
+        </form>
+    </div>
+    {% endblock %}
+
+    {% block scripts %}
+    {{ room.slug|json_script:"json-roomname" }}
+    {{ request.user.username|json_script:"json-username" }}
+
+    <script>
+        const roomName = JSON.parse(document.getElementById('json-roomname').textContent);
+        const userName = JSON.parse(document.getElementById('json-username').textContent);
+        const chatMessages = document.querySelector('#chat-messages');
+
+        var loc = window.location;
+        var wsStart = 'ws://';
+        if(loc.protocol == 'https:') {
+            wsStart = 'wss://'
+        }
+        // var endpoint = wsStart + 'your_ip_address:port_given_to_daphne_server' + '/ws/home';
+        // For above command, it look like this
+        var endpoint = wsStart + 'uniway.gis4cloud.com:8036/wss/' + roomName + '/';
+
+        var chatSocket = new WebSocket(endpoint);
+
+
+
+//        const chatSocket = new WebSocket(
+//            'wss://' +
+//            window.location.hostname +
+//            ':8035/wss/' +
+//            roomName +
+//            '/'
+//        );
+
+        chatSocket.onclose = function(e) {
+            console.log('onclose');
+        }
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+
+            if (data.messages) {
+                // Limpar mensagens existentes antes de adicionar novas
+                chatMessages.innerHTML = '';
+
+                // Adicionar mensagens ao elemento
+                data.messages.forEach(message => {
+                    chatMessages.innerHTML += `<div class="message ${message.user__username === userName ? 'right' : 'left'}">
+                                                <b>${message.user__username}</b>: ${message.content}<br>
+                                            </div>`;
+                });
+            } else if (data.message) {
+                // Adicionar nova mensagem ao elemento
+                chatMessages.innerHTML += `<div class="message ${data.username === userName ? 'right' : 'left'}">
+                                            <b>${data.username}</b>: ${data.message}<br>
+                                        </div>`;
+            } else {
+                alert('The message was empty!');
+            }
+
+            scrollToBottom();
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            e.preventDefault()
+
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value.trim(); // trim para remover espaços em branco no início e no final
+
+            if (message !== '') {
+                console.log({
+                    'message': message,
+                    'username': userName,
+                    'room': roomName
+                })
+
+                chatSocket.send(JSON.stringify({
+                    'message': message,
+                    'username': userName,
+                    'room': roomName
+                }));
+            }
+
+            messageInputDom.value = '';
+            return false;
+        };
+
+        /**
+         * A function for finding the messages element, and scroll to the bottom of it.
+         */
+        function scrollToBottom() {
+            let objDiv = document.getElementById("chat-messages");
+            objDiv.scrollTop = objDiv.scrollHeight;
+        }
+
+        // to trigger the scroll on load.
+        scrollToBottom();
+    </script>
+{% endblock %}
