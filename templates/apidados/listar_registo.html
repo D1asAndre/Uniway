@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista Registo{% endblock %}
+
+{% block content %}
+    {% if dados_api %}
+        <h2>Registos:</h2>
+        <ul>
+            {% for item in dados_api %}
+                <li><strong>{{item.num_mec}}</strong> - Nome:{{ item.nome }} - Apelido:{{item.apelido}} - Email:{{ item.email }} - Telemovel:{{ item.telemovel }} - Telefone:{{item.telefone}} - Data de nascimento:{{item.data_nascimento}} - Pais:{{item.pais}} - Sexo:{{item.sexo}}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Falha ao obter dados da API.</p>
+    {% endif %}
+{% endblock %}

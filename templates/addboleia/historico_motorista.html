@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+
+    <style>
+        .table-container {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ddd;
+        }
+
+        .header-row {
+            display: flex;
+            background-color: #f2f2f2;
+            padding: 10px;
+        }
+
+        .table-row {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .table-cell {
+            flex: 1;
+        }
+
+        .table-container {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ddd;
+            margin-left: 50px;
+            margin-right: 50px;
+        }
+
+        .lista-boleias {
+            text-align: center;
+            padding: 20px;
+            margin-left: 50px; /* Ajuste aqui conforme necessário */
+            margin-right: 50px; /* Ajuste aqui conforme necessário */
+            border-radius: 6px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    
+    <div class="text">Histórico de Motorista</div>
+    <br><br>
+    {% if historico_boleias %}
+        <div class="table-container filtro">
+            <div class="header-row">
+                <div class="table-cell">Origem</div>
+                <div class="table-cell">Destino</div>
+                <div class="table-cell">Data</div>
+                <div class="table-cell">Hora de Início</div>
+                <div class="table-cell">Hora de Chegada</div>
+                <div class="table-cell">Vagas Disponíveis</div>
+                <div class="table-cell">Vagas Ocupadas</div>
+                <div class="table-cell">Status</div>
+            </div>
+            {% for boleia in historico_boleias %}
+                <div class="table-row" style="background-color: {% if boleia.cancelada %}#ffcccc{% endif %};">
+                    <div class="table-cell">{{ boleia.origem }}</div>
+                    <div class="table-cell">{{ boleia.destino }}</div>
+                    <div class="table-cell">{{ boleia.data }}</div>
+                    <div class="table-cell">{{ boleia.hora }}</div>
+                    <div class="table-cell">{{ boleia.hora_chegada }}</div>
+                    <div class="table-cell">{{ boleia.vagas_disponiveis }}</div>
+                    <div class="table-cell">{{ boleia.vagas_ocupadas }}</div>
+                    <div class="table-cell">{% if boleia.cancelada %}Cancelada{% else %}Concluída{% endif %}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="lista-boleias">Nenhuma boleia no histórico.</p>
+    {% endif %}
+{% endblock %}

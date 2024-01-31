@@ -1,0 +1,21 @@
+/* Adicione isso ao seu arquivo CSS */
+
+body {
+    background: #63cb8b;
+}
+
+.map-container {
+    float: left;
+    width: 50%; /* Ajuste conforme necessário */
+    margin-bottom: 20px; /* Adiciona espaço entre cada mapa e tabela */
+}
+
+.map {
+    height: 300px; /* Defina a altura desejada para o mapa */
+}
+
+table {
+    float: left;
+    width: 50%; /* Ajuste conforme necessário */
+    margin-left: 10px; /* Espaçamento entre o mapa e a tabela */
+}
