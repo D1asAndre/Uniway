@@ -103,12 +103,13 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+"""
 # Render PostgreSQL database (Live)
 DATABASES = {
    'default': dj_database_url.parse(env('DATABASE_URL'))
 }
-
 """
+
 # Use your PostgreSQL configuration directly
 DATABASES = {
     'default': {
@@ -120,7 +121,6 @@ DATABASES = {
         'PORT': '5433',
     }
 }
-"""
 
 
 # Password validation
