@@ -1,267 +1,345 @@
 {% extends 'base.html' %}
 {% block content %}
 
-    <title>Perfil do Usuário</title>
-    <style>
+<title>Perfil do Usuário</title>
+<style>
 
-        .botao-tabela {
-            width: 10%;
-            text-decoration: none;
-            margin-top: auto;
-            align-self: flex-start; /* Alterado para flex-start para alinhar à esquerda */
-            margin-bottom: 0px; /* Adiciona margem inferior para separação */
-        }
+    .botao-tabela {
+        width: 10%;
+        text-decoration: none;
+        margin-top: auto;
+        align-self: flex-start; /* Alterado para flex-start para alinhar à esquerda */
+        margin-bottom: 0px; /* Adiciona margem inferior para separação */
+    }
 
-        textarea {
-            width: 30%;
-            padding: 8px;
-            box-sizing: border-box;
-            margin-top: 5px;
-        }
+    textarea {
+        width: 30%;
+        padding: 8px;
+        box-sizing: border-box;
+        margin-top: 5px;
+    }
 
-        input[type="number"]{
-            width: 5%;
-            padding: 8px;
-            box-sizing: border-box;
-            margin-top: 5px;
-        }
+    input[type="number"] {
+        width: 5%;
+        padding: 8px;
+        box-sizing: border-box;
+        margin-top: 5px;
+    }
 
-        .rating {
-            unicode-bidi: bidi-override;
-            direction: ltr;
-            text-align: center;
-        }
-    
-        .rating > span {
-            display: inline-block;
-            width: 1.1em;
-        }
-    
-        .rating > span.filled {
-            color: gold;
-        }
-    
-        .unrated {
-            color: #ccc;  /* Cor para estrelas não preenchidas */
-        }
+    .rating {
+        unicode-bidi: bidi-override;
+        direction: ltr;
+        text-align: center;
+    }
 
-        {% if user == perfil.user_id %}
-            .table-containere {
-                display: flex;
-                flex-direction: column;
-                border: 1px solid #ddd;
-                margin-left: 50px;
-                margin-right: 50px;
-                min-height: 420px; /* Adjust the value as needed */
-            }
+    .rating > span {
+        display: inline-block;
+        width: 1.1em;
+    }
+
+    .rating > span.filled {
+        color: gold;
+    }
+
+    .unrated {
+        color: #ccc; /* Cor para estrelas não preenchidas */
+    }
+
+    {
+    %
+    if
+    user
+    =
+    =
+    perfil
+    .
+    user_id
+    %
+    }
+    .table-containere {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #ddd;
+        margin-left: 50px;
+        margin-right: 50px;
+        min-height: 420px; /* Adjust the value as needed */
+    }
+
+    {
+    %
+    else
+    %
+    }
+
+    .table-containere {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #ddd;
+        margin-left: 50px;
+        margin-right: 50px;
+        min-height: 620px; /* Adjust the value as needed */
+    }
+
+    {
+    %
+    endif
+    %
+    }
+    .profile-picture {
+        border-radius: 50%;
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+    }
+
+    .user-info {
+        display: flex;
+        margin-left: 50px;
+
+    }
+
+    .user-details {
+        margin-top: 50px;
+        margin-right: auto;
+        margin-left: 20px;
+        text-align: left;
+    }
+
+    {
+    %
+    if
+    user
+    =
+    =
+    perfil
+    .
+    user_id
+    %
+    }
+    .avaliacoes {
+        margin-top: -180px;
+        margin-left: auto;
+        margin-right: 50px;
+    }
+
+    {
+    %
+    else
+    %
+    }
+    .avaliacoes {
+        margin-top: -500px;
+        margin-left: auto;
+        margin-right: 50px;
+
+    }
+
+    {
+    %
+    endif
+    %
+    }
+    .avaliacao {
+        margin-top: 20px;
+    }
+
+    .avaliacao-form {
+        text-align: left; /* Alinha à esquerda */
+        margin-top: 20px;
+    }
+
+    .table-container.filtro {
+        margin-bottom: 10px;
+    }
+
+    .avaliacoes-container {
+        max-height: 300px; /* Ajuste a altura máxima conforme necessário */
+        overflow-y: auto; /* Adiciona a barra de rolagem vertical quando necessário */
+    }
+
+    .avaliationposition {
+        margin-top: 80px;
+        margin-left: 55px;
+
+    }
+
+    .description {
+        width: 90%;
+    }
+
+    .button-icon {
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .name-and-button {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .button-icon .icon {
+        font-size: 24px;
+        margin-left: 10px;
+
+    }
+
+    /*Mensagens de alerta*/
+    .message {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        color: #fff;
+    }
+
+    .success {
+        background-color: #4CAF50; /* Green */
+    }
+
+    .error {
+        background-color: #f44336; /* Red */
+    }
+
+    #message-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+</style>
+
+{% if messages %}
+<div id="message-container">
+    {% for message in messages %}
+    <div class="message {{ message.tags }}">
+        <strong>{{ message }}</strong>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="text">Perfil</div>
+<div class="table-containere filtro">
+    <div class="user-info">
+        {% if perfil.photo %}
+        <img class="profile-picture" src="{{ perfil.photo.url }}" alt="Foto do Usuário">
         {% else %}
-
-            .table-containere {
-                display: flex;
-                flex-direction: column;
-                border: 1px solid #ddd;
-                margin-left: 50px;
-                margin-right: 50px;
-                min-height: 620px; /* Adjust the value as needed */
-            }
+        <!-- Imagem padrão caso a foto seja nula -->
+        <img class="profile-picture" src="{{ perfil.get_default_photo_url }}" alt="Foto do Usuário Padrão">
         {% endif %}
-        .profile-picture {
-            border-radius: 50%;
-            width: 150px;
-            height: 150px;
-            object-fit: cover;
-        }
-        
-        .user-info {
-            display: flex;
-            margin-left: 50px;
+        <div class="user-details">
+            <div class="name-and-button">
+                <h2>{{ perfil.user_id.get_full_name }}</h2>
+                {% if user != perfil.user_id %}
+                <button class="button-icon" onclick="onButtonClick('{{ user.id }}', '{{ perfil.user_id.id }}')">
+                    <i class='bx bx-chat icon'></i>
+                </button>
 
-        }
+                {% if is_blocked %}
+                <!-- Botão para desbloquear -->
+                <a href="{% url 'definition:unblock_users' perfil.user_id.id%}" class="botao-tabela">Desbloquear</a>
+                {% else %}
+                <!--Botão para bloquear-->
+                <a href="{% url 'definition:block_users' perfil.user_id.id %}" class="botao-tabela">Bloquear</a>
+                {% endif %}
+                {% endif %}
+            </div>
 
-        .user-details {
-            margin-top: 50px;
-            margin-right: auto;
-            margin-left: 20px;
-            text-align: left;
-        }
-
-        {% if user == perfil.user_id %}
-            .avaliacoes {
-                margin-top: -180px;
-                margin-left: auto;
-                margin-right: 50px;
-            }
-        {% else %}
-            .avaliacoes {
-                margin-top: -500px;
-                margin-left: auto;
-                margin-right: 50px;
-
-            }
-        {% endif %}
-        .avaliacao {
-            margin-top: 20px;
-        }
-
-        .avaliacao-form {
-            text-align: left; /* Alinha à esquerda */
-            margin-top: 20px;
-        }
-        
-        .table-container.filtro {
-            margin-bottom: 10px;
-        }
-
-        .avaliacoes-container {
-            max-height: 300px;  /* Ajuste a altura máxima conforme necessário */
-            overflow-y: auto;  /* Adiciona a barra de rolagem vertical quando necessário */
-        }
-        
-        .avaliationposition {
-            margin-top: 80px;
-            margin-left: 55px;
-
-        }
-
-        .description {
-            width:90%;
-        }
-
-        .button-icon {
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
-        .name-and-button {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .button-icon .icon {
-            font-size: 24px;
-            margin-left: 10px;
-
-        }
-    </style>
-
-    <div class="text">Perfil</div>
-    <div class="table-containere filtro">
-        <div class="user-info">
-            {% if perfil.photo %}
-                <img class="profile-picture" src="{{ perfil.photo.url }}" alt="Foto do Usuário">
-            {% else %}
-                <!-- Imagem padrão caso a foto seja nula -->
-                <img class="profile-picture" src="{{ perfil.get_default_photo_url }}" alt="Foto do Usuário Padrão">
-            {% endif %}
-            <div class="user-details">
-                <div class="name-and-button">
-                    <h2>{{ perfil.user_id.get_full_name }}</h2>
-                    {% if user != perfil.user_id %}
-                        <button class="button-icon" onclick="onButtonClick('{{ user.id }}', '{{ perfil.user_id.id }}')">
-                            <i class='bx bx-chat icon'></i>
-                        </button>
-
-                        {% if is_blocked %}
-                        <!-- Botão para desbloquear -->
-                            <a href="{% url 'definition:unblock_users' perfil.user_id.id%}" class="botao-tabela">Desbloquear</a>
-                        {% else %}
-                        <!--Botão para bloquear-->
-                            <a href="{% url 'definition:block_users' perfil.user_id.id %}" class="botao-tabela">Bloquear</a>
-                        {% endif %}
-                    {% endif %}
-                </div>
-                
-                <p>Média de Avaliações: {{ perfil.media_avaliacoes|floatformat:1 }}</p>
-                <p>Total de Avaliações: {{ perfil.total_avaliacoes }}</p>
-                <div class="description">
+            <p>Média de Avaliações: {{ perfil.media_avaliacoes|floatformat:1 }}</p>
+            <p>Total de Avaliações: {{ perfil.total_avaliacoes }}</p>
+            <div class="description">
                 <p>{{ perfil.description }}</p>
-                </div>
             </div>
         </div>
-        
-        <div class="avaliationposition">
-            <!-- Se o perfil estiver bloqueado não pode fazer comentários no utilizador que bloqueou e nem visualizar os comentários-->
-            {% if user != perfil.user_id  and not is_blocked %}
-                <div class="avaliacao-form">
-                    <h2>Deixe sua avaliação:</h2>
-                    <br>
-                    <form method="post" action="{% url 'definition:salvar_avaliacao' perfil.user_id.username %}">
-                        {% csrf_token %}
-                        <label for="{{ form.estrelas.id_for_label }}">Estrelas:</label>
-                        <br>
-                        {{ form.estrelas }}
-                        <br><br>
-                        <label for="{{ form.comentario.id_for_label }}">Comentário:</label>
-                        <br>
-                        {{ form.comentario }}
-                        <br><br>
-                        <button class="botao-tabela" type="submit">Enviar Avaliação</button>
-                    </form>
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="avaliacoes">
-            <h2>Comentários:</h2>
-            <div id="avaliacoes-container" class="avaliacoes-container">
-                <!-- As primeiras três avaliações são carregadas inicialmente -->
-                {% for avaliacao in avaliacoes %}
-                    <div class="avaliacao">
-                        <p><b> {{ avaliacao.avaliador.username }}:</b></p>
-                        <div class="rating">
-                            {% for _ in "12345" %}
-                                <span {% if avaliacao.estrelas|default:"0"|add:"0" >= forloop.counter %}class="filled"{% endif %}>&#x2605;</span>
-                            {% endfor %}
-                        </div>
-                        <p>Comentário: {{ avaliacao.comentario }}</p>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        {% if user == perfil.user_id %}
-            <a class="botao-tabela" href="{% url 'definition:edit_profile' %}">Editar Perfil</a>
-        {% endif %}
-           
     </div>
 
-    <br>
-
-    {% if boleias_ativas %}
-        <div class="text">Boleias Aceites</div>
-        <br>
-        <div id="boleias-container">
-            <!-- The first three boleias are loaded initially -->
-            {% for boleia in boleias_ativas|slice:":3" %}
-                <div class="table-container filtro">
-                    <p>Origem: {{ boleia.origem }}</p>
-                    <p>Destino: {{ boleia.destino }}</p>
-                    <p>Data: {{ boleia.data }}</p>
-                </div>
-                <!-- Add other fields as necessary -->
-            {% endfor %}
+    <div class="avaliationposition">
+        <!-- Se o perfil estiver bloqueado não pode fazer comentários no utilizador que bloqueou e nem visualizar os comentários-->
+        {% if user != perfil.user_id and not is_blocked %}
+        <div class="avaliacao-form">
+            <h2>Deixe sua avaliação:</h2>
+            <br>
+            <form method="post" action="{% url 'definition:salvar_avaliacao' perfil.user_id.username %}">
+                {% csrf_token %}
+                <label for="{{ form.estrelas.id_for_label }}">Estrelas:</label>
+                <br>
+                {{ form.estrelas }}
+                <br><br>
+                <label for="{{ form.comentario.id_for_label }}">Comentário:</label>
+                <br>
+                {{ form.comentario }}
+                <br><br>
+                <button class="botao-tabela" type="submit">Enviar Avaliação</button>
+            </form>
         </div>
+        {% endif %}
+    </div>
+
+    <div class="avaliacoes">
+        <h2>Comentários:</h2>
+        <div id="avaliacoes-container" class="avaliacoes-container">
+            <!-- Verifica se o usuário está visualizando o próprio perfil ou se não está bloqueado -->
+            {% if user == perfil.user_id or not is_blocked %}
+            {% for avaliacao in avaliacoes %}
+            <div class="avaliacao">
+                <p><b>{{ avaliacao.avaliador.username }}:</b></p>
+                <div class="rating">
+                    {% for _ in "12345" %}
+                    <span {% if avaliacao.estrelas|default:"0"|add:"0" >= forloop.counter %}class="filled"{% endif %}>&#x2605;</span>
+                    {% endfor %}
+                </div>
+                <p>Comentário: {{ avaliacao.comentario }}</p>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p>Os comentários deste usuário não estão disponíveis devido a restrições de bloqueio.</p>
+            {% endif %}
+        </div>
+    </div>
+
+
+    {% if user == perfil.user_id %}
+    <a class="botao-tabela" href="{% url 'definition:edit_profile' %}">Editar Perfil</a>
     {% endif %}
 
-    <!-- Load More button -->
+</div>
 
-    <div id="load-more" title="Carrega mais" style="font-size: 30px; text-align: center;"><b>. . .</b></div>
-    <br>
-    <script>
+<br>
 
-        function onButtonClick(userId, boleiaUserId) {
-            console.log("Button clicked!");
-            
-            $.ajax({
-                url: "{% url 'room:create_chat_room' %}",
-                method: 'POST',
-                data: {
-                    'boleia_id': boleiaUserId,
-                    'session_id': userId,
-                    'csrfmiddlewaretoken': '{{ csrf_token }}'
-                },
-            })
+{% if boleias_ativas %}
+<div class="text">Boleias Aceites</div>
+<br>
+<div id="boleias-container">
+    <!-- The first three boleias are loaded initially -->
+    {% for boleia in boleias_ativas|slice:":3" %}
+    <div class="table-container filtro">
+        <p>Origem: {{ boleia.origem }}</p>
+        <p>Destino: {{ boleia.destino }}</p>
+        <p>Data: {{ boleia.data }}</p>
+    </div>
+    <!-- Add other fields as necessary -->
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Load More button -->
+
+<div id="load-more" title="Carrega mais" style="font-size: 30px; text-align: center;"><b>. . .</b></div>
+<br>
+<script>
+    function onButtonClick(userId, boleiaUserId) {
+        console.log("Button clicked!");
+
+        $.ajax({
+            url: "{% url 'room:create_chat_room' %}",
+            method: 'POST',
+            data: {
+                'boleia_id': boleiaUserId,
+                'session_id': userId,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+        })
             .done(function (data) {
                 console.log("Chat room created successfully!", data);
                 console.log("Redirecting to:", data.room_url);
@@ -269,54 +347,78 @@
                     window.location.href = data.room_url;
                 }
             })
-            
+
             .fail(function (jqXHR, textStatus, errorThrown) {
                 console.error("Error creating chat room:", textStatus, errorThrown);
                 alert("Error creating chat room: " + textStatus);
             });
-        }
+    }
 
-        document.addEventListener("DOMContentLoaded", function () {
-            var container = document.getElementById("boleias-container");
-            var loadMoreButton = document.getElementById("load-more");
-            var itemsPerPage = 3;  // Adjust the number of items to load per click
-        
-            // Function to load more items
-            function loadMoreItems() {
-                var visibleItems = container.getElementsByClassName("table-container").length;
-                var endIndex = visibleItems + itemsPerPage;
-        
-                // Load more items if available
-                {% for boleia in boleias_ativas %}
-                    {% if forloop.counter > 3 %}
-                        if (visibleItems < {{ forloop.counter }} && visibleItems < endIndex) {
-                            var div = document.createElement("div");
-                            div.className = "table-container filtro";
-                            div.innerHTML = `
+    document.addEventListener("DOMContentLoaded", function () {
+        var container = document.getElementById("boleias-container");
+        var loadMoreButton = document.getElementById("load-more");
+        var itemsPerPage = 3;  // Adjust the number of items to load per click
+
+        // Function to load more items
+        function loadMoreItems() {
+            var visibleItems = container.getElementsByClassName("table-container").length;
+            var endIndex = visibleItems + itemsPerPage;
+
+            // Load more items if available
+            {%
+                for boleia in boleias_ativas %
+            }
+            {%
+                if forloop.counter > 3 %
+            }
+            if (visibleItems < {{
+                forloop.counter
+            }
+        } &&
+            visibleItems < endIndex
+        )
+            {
+                var div = document.createElement("div");
+                div.className = "table-container filtro";
+                div.innerHTML = `
                                 <p>Origem: {{ boleia.origem }}</p>
                                 <p>Destino: {{ boleia.destino }}</p>
                                 <p>Data: {{ boleia.data }}</p>
                             `;
-                            container.appendChild(div);
-                            visibleItems++;
-                        }
-                    {% endif %}
-                {% endfor %}
-        
-                // Hide the Load More button if no more items to load
-                if (visibleItems >= {{ boleias_ativas|length }}) {
-                    loadMoreButton.style.display = "none";
-                }
+                container.appendChild(div);
+                visibleItems++;
             }
-        
-            // Attach the loadMoreItems function to the Load More button click event
-            loadMoreButton.addEventListener("click", loadMoreItems);
-        
-            // Initially hide the Load More button if no more items to load
-            if ({{ boleias_ativas|length }} <= 3) {
+            {%
+                endif %
+            }
+            {%
+                endfor %
+            }
+
+            // Hide the Load More button if no more items to load
+            if (visibleItems >= {{
+                boleias_ativas | length
+            }
+        })
+            {
                 loadMoreButton.style.display = "none";
             }
-        });        
-    </script>
+        }
+
+        // Attach the loadMoreItems function to the Load More button click event
+        loadMoreButton.addEventListener("click", loadMoreItems);
+
+        // Initially hide the Load More button if no more items to load
+        if ({{
+            boleias_ativas | length
+        }
+    }
+        <= 3
+    )
+        {
+            loadMoreButton.style.display = "none";
+        }
+    })
+</script>
 
 {% endblock %}

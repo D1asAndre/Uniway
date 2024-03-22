@@ -82,7 +82,6 @@ def perfil_usuario(request, username):
 
     boleias_ativas = perfil.boleias_ativas()
 
-
     # Verificar se o utiizador bloqueou o utilizador que está a visitar
     is_blocked = UserBlock.objects.filter(blocker=request.user, blocked=perfil.user_id).exists()
 
@@ -99,10 +98,16 @@ def perfil_usuario(request, username):
 
 @login_required()
 def salvar_avaliacao(request, username):
-    if request.method == 'POST':
-        usuario_avaliado = get_object_or_404(User, username=username)
-        avaliador = request.user  # ou a lógica que você usar para obter o avaliador
+    usuario_avaliado = get_object_or_404(User, username=username)
+    avaliador = request.user  # ou a lógica que você usar para obter o avaliador
 
+    # Lógica de bloqueo entre o avaliador e o user avaliado
+    if UserBlock.objects.filter(blocker=avaliador, blocked=usuario_avaliado).exists() or \
+            UserBlock.objects.filter(blocker=usuario_avaliado, blocked=avaliador).exists():
+        messages.error(request, 'Não pode avaliar este perfil. Encontra-se bloqueado')
+        return redirect('definition:perfil_usuario', username=username)
+
+    if request.method == 'POST':
         form = AvaliacaoForm(request.POST)
         if form.is_valid():
             estrelas = form.cleaned_data['estrelas']
@@ -122,6 +127,9 @@ def salvar_avaliacao(request, username):
             # Recalcule as avaliações no perfil do usuário, se a instância existir
             if perfil:
                 perfil.recalcular_avaliacoes()
+                messages.success(request, "Avaliação enviada com sucesso.")
+        else:
+            messages.error(request, "Ocorreu um erro ao enviar a avaliação")
 
     return redirect('definition:perfil_usuario', username=username)
 
@@ -138,12 +146,14 @@ def search_users(request):
 
     return render(request, 'definition/search_results.html', {'form': form, 'results': results})
 
+
 # Bloquear utilizador
 @login_required()
 def block_users(request, user_id):
     user_to_block = get_object_or_404(User, pk=user_id)
     UserBlock.objects.get_or_create(blocker=request.user, blocked=user_to_block)
     return redirect('definition:perfil_usuario', username=user_to_block.username)
+
 
 # Desbloquear utilizador
 @login_required()
