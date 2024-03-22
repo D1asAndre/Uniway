@@ -18,14 +18,12 @@ from djangoProject.huey_config import enviar_email_boleia_agendada
 from googlemaps import Client
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-#para criar um tuplo na tabela userprofile
+# para criar um tuplo na tabela userprofile
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from apps.definition.models import UserProfile
+from apps.definition.models import UserProfile, UserBlock
 
 logger = logging.getLogger(__name__)
-
-
 
 
 # Função para calcular ETA com base no atraso
@@ -35,10 +33,12 @@ def calcular_eta(data, hora):
     diff_minutos = (boleia - agora).total_seconds() / 60
     dias = int(diff_minutos // 1440)
     minutos = int(diff_minutos % 1440)
-    
+
     eta = boleia + timedelta(days=dias, minutes=minutos)
-    
+
     return eta
+
+
 @login_required(login_url='/login/')
 def agendar_boleia(request):
     form = BoleiaForm(request.POST or None)
@@ -62,12 +62,13 @@ def agendar_boleia(request):
             boleia_instance.destino_longitude = destino_location.latlng[1] if destino_location else None
 
             if (
-                boleia_instance.origem_latitude is None
-                and boleia_instance.origem_longitude is None
-                and boleia_instance.destino_latitude is None
-                and boleia_instance.destino_longitude is None
+                    boleia_instance.origem_latitude is None
+                    and boleia_instance.origem_longitude is None
+                    and boleia_instance.destino_latitude is None
+                    and boleia_instance.destino_longitude is None
             ):
-                return JsonResponse({'success': False, 'errors': ['__all__: Não foi possível decodificar o endereço desejado']})
+                return JsonResponse(
+                    {'success': False, 'errors': ['__all__: Não foi possível decodificar o endereço desejado']})
 
             min_latitude = 39.87625
             max_latitude = 41.20192
@@ -75,10 +76,10 @@ def agendar_boleia(request):
             max_longitude = -7.85707
 
             if (
-                min_latitude <= boleia_instance.origem_latitude <= max_latitude
-                and min_longitude <= boleia_instance.origem_longitude <= max_longitude
-                and min_latitude <= boleia_instance.destino_latitude <= max_latitude
-                and min_longitude <= boleia_instance.destino_longitude <= max_longitude
+                    min_latitude <= boleia_instance.origem_latitude <= max_latitude
+                    and min_longitude <= boleia_instance.origem_longitude <= max_longitude
+                    and min_latitude <= boleia_instance.destino_latitude <= max_latitude
+                    and min_longitude <= boleia_instance.destino_longitude <= max_longitude
             ):
                 # Configure a chave da API do Google Maps
                 api_key = 'AIzaSyA5T5hTNTE_29t3Hdilo470G35BpBzan4s'
@@ -96,10 +97,10 @@ def agendar_boleia(request):
                         duracao_viagem = element['duration']['value']  # em segundos
 
                         atraso_email = 1  # minutos de atraso para o email
-                        
-                        boleia_instance.eta = calcular_eta(boleia_instance.data, boleia_instance.hora) + timedelta(minutes=atraso_email + duracao_viagem // 60)
-                        boleia_instance.save()
 
+                        boleia_instance.eta = calcular_eta(boleia_instance.data, boleia_instance.hora) + timedelta(
+                            minutes=atraso_email + duracao_viagem // 60)
+                        boleia_instance.save()
 
                         # Agende a tarefa do Huey para enviar o e-mail no momento correto
                         enviar_email_boleia_agendada.schedule(
@@ -107,10 +108,6 @@ def agendar_boleia(request):
                             args=[boleia_instance.user.email, boleia_instance.id]
                         )
                         return JsonResponse({'success': True, 'message': 'Boleia agendada com sucesso!'})
-
-                        
-            
-
 
                 return JsonResponse({'success': True, 'message': 'Boleia agendada com sucesso!'})
             else:
@@ -128,15 +125,15 @@ def agendar_boleia(request):
     return render(request, 'agendar_boleia.html', context)
 
 
-
 # ---------------------------------------------------------------------
 
 from datetime import datetime
 
+
 @login_required(login_url='/login/')
 def home_page(request):
     """
-    Exibe a página inicial com as boleias disponíveis de acordo com o destino e data selecionados.
+    Exibe a página inicial com as boleias disponíveis e para quem não esteja bloqueado pelo utilizador especifico de acordo com o destino e data selecionados.
 
     Parameters:
     - request (HttpRequest): O objeto de solicitação HTTP.
@@ -145,7 +142,7 @@ def home_page(request):
     - render: Uma resposta renderizada com a página inicial e as boleias disponíveis.
     """
     user_profile, created = UserProfile.objects.get_or_create(user_id=request.user)
-    
+
     destino_filtrado = request.GET.get('destino', None)
     data_filtrada = request.GET.get('data', None)
     data_hora_atuais = timezone.localtime(timezone.now())
@@ -155,27 +152,25 @@ def home_page(request):
     if destino_filtrado not in destinos_disponiveis:
         destino_filtrado = None
 
-    # Adicione a condição para excluir boleias cuja data e hora já passaram
-    boleias_existente = []
+    # Obtém os ID dos utilizadores que estão bloqueados e que bloquearam o utilizador autenticado
+    blocked_users_ids = list(UserBlock.objects.filter(blocker=request.user).values_list('blocked_id', flat=True))
+    blocking_users_ids = list(UserBlock.objects.filter(blocked=request.user).values_list('blocker_id', flat=True))
 
-    for boleia in Boleia.objects.all():
+    # Filtra as boleias excluindo as de usuários bloqueados ou que bloquearam o usuário
+    boleias_existente = []
+    for boleia in Boleia.objects.exclude(user_id__in=blocked_users_ids + blocking_users_ids):
         data_hora_boleia = timezone.make_aware(datetime.combine(boleia.data, boleia.hora))
         if data_hora_boleia >= data_hora_atuais:
-            boleias_existente.append(boleia)
+            if destino_filtrado is None or boleia.destino == destino_filtrado:
+                if data_filtrada is None or boleia.data == datetime.strptime(data_filtrada, '%Y-%m-%d').date():
+                    boleias_existente.append(boleia)
 
-    if destino_filtrado:
-        boleias_existente = [boleia for boleia in boleias_existente if boleia.destino == destino_filtrado]
-
-    if data_filtrada:
-        try:
-            data_formatada = datetime.strptime(data_filtrada, '%Y-%m-%d')
-            boleias_existente = [boleia for boleia in boleias_existente if boleia.data == data_formatada]
-        except ValueError:
-            # Caso a data não seja válida, você pode tratar isso da maneira que achar adequada
-            pass
-
-    return render(request, 'home_page.html', {'boleias_existente': boleias_existente, 'destinos': destinos_disponiveis,
-                                              'destino_filtrado': destino_filtrado, 'data_filtrada': data_filtrada})
+    return render(request, 'home_page.html', {
+        'boleias_existente': boleias_existente,
+        'destinos': destinos_disponiveis,
+        'destino_filtrado': destino_filtrado,
+        'data_filtrada': data_filtrada
+    })
 
 
 @login_required(login_url='/login/')
@@ -324,27 +319,24 @@ def pedidos_do_motorista(request):
                 from_email = 'uniway@outlook.pt'
 
                 send_mail(subject, message, from_email, [pedido.passageiro.email], fail_silently=False)
-        else: 
+        else:
             pedido = PedidoBoleia.objects.filter(boleia__id=boleia_id, passageiro__id=passageiro_id).first()
 
             if pedido:
-
                 # Marcar o pedido como aceito e salvar
                 pedido.aceito = False
                 pedido.save()
 
-                    # Enviar e-mail ao passageiro informando que a boleia foi aceita
+                # Enviar e-mail ao passageiro informando que a boleia foi aceita
                 subject = 'Boleia Recusada'
                 message = f'Sua solicitação para a boleia de {pedido.boleia.origem} para {pedido.boleia.destino} foi recusada.'
                 from_email = 'uniway@outlook.pt'
 
                 send_mail(subject, message, from_email, [pedido.passageiro.email], fail_silently=False)
-                
 
     # Pedidos Pendentes
     pedidos_pendentes = PedidoBoleia.objects.filter(aceito__isnull=True, boleia__user=request.user)
     print("Pending Requests Count:", pedidos_pendentes.count())
-
 
     # Pedidos Aceitos
     pedidos_aceitos = PedidoBoleia.objects.filter(aceito=True, boleia__user=request.user)
@@ -374,13 +366,14 @@ def pedidos_do_passageiro(request):
 
 from django.http import JsonResponse
 
+
 @login_required
 def cancelar_boleia_ajax(request, boleia_id):
     if not request.user.is_authenticated:
         return JsonResponse({'success': False, 'message': 'Usuário não autenticado.'})
 
     boleia = get_object_or_404(Boleia, id=boleia_id, user=request.user)
-    
+
     passageiros_emails = list(
         PedidoBoleia.objects.filter(boleia=boleia)
         .exclude(aceito=False)
@@ -388,20 +381,18 @@ def cancelar_boleia_ajax(request, boleia_id):
         .values_list('passageiro__email', flat=True)
     )
 
-    
     # Enviar e-mail aos passageiros
     subject = 'Boleia Cancelada'
     plain_message = (
         f"Exmo passageiro, a boleia com origem em {boleia.origem} e destino {boleia.destino}, "
         f"no dia {boleia.data.strftime('%d/%m/%Y')} às {boleia.hora.strftime('%H:%M')}, "
         f"foi cancelada pelo motorista. Pedimos desculpas pelo inconveniente."
-    )    
+    )
     send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, passageiros_emails)
 
     # Lista de e-mails dos passageiros (assumindo que há um campo que relaciona os pedidos à boleia)
 
     send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, passageiros_emails, html_message=plain_message)
-    
 
     dados_pedidos = []
     for pedido in PedidoBoleia.objects.filter(boleia=boleia):
@@ -413,7 +404,7 @@ def cancelar_boleia_ajax(request, boleia_id):
             'motorista_username': boleia.user.username,
             'data_boleia': boleia.data.strftime('%Y-%m-%d'),
             'hora_boleia': boleia.hora.strftime('%H:%M:%S'),
-            'aceito': pedido.aceito,  
+            'aceito': pedido.aceito,
         })
 
     # Tenta abrir o arquivo JSON existente
@@ -433,10 +424,9 @@ def cancelar_boleia_ajax(request, boleia_id):
     with open('apps/addboleia/pedidos_boleia.json', 'w') as arquivo_json:
         json.dump(dados_json, arquivo_json, cls=DjangoJSONEncoder)
 
-
     # Mover a boleia para o histórico com o campo 'cancelada' marcado como True
     HistoricoBoleia.objects.create(
-       
+
         user=boleia.user,
         destino=boleia.destino,
         origem=boleia.origem,
@@ -454,20 +444,17 @@ def cancelar_boleia_ajax(request, boleia_id):
 
 
 from django.utils import timezone
+
+
 def finalizar_boleia_ajax(request, boleia_id):
     if not request.user.is_authenticated:
         return JsonResponse({'success': False, 'message': 'Usuário não autenticado.'})
 
     boleia = get_object_or_404(Boleia, id=boleia_id, user=request.user)
-    
-    
 
-
-    
-    
     # Mover a boleia para o histórico com o campo 'hora_chegada' preenchido
     HistoricoBoleia.objects.create(
-        
+
         user=boleia.user,
         destino=boleia.destino,
         origem=boleia.origem,
@@ -484,7 +471,6 @@ def finalizar_boleia_ajax(request, boleia_id):
     return JsonResponse({'success': True, 'message': 'Boleia finalizada com sucesso.'})
 
 
-
 def historico_motorista(request):
     # Obtenha todas as boleias do histórico para o motorista atual
     historico_boleias = HistoricoBoleia.objects.filter(user=request.user)
@@ -494,6 +480,7 @@ def historico_motorista(request):
     }
 
     return render(request, 'addboleia/historico_motorista.html', context)
+
 
 @login_required
 def historico_passageiro(request):
@@ -509,7 +496,8 @@ def historico_passageiro(request):
         dados_json = {'pedidos': []}
 
     # Filtrar os dados do JSON para obter apenas os do usuário logado
-    pedidos_usuario = [pedido for pedido in dados_json['pedidos'] if pedido['passageiro_username'] == request.user.username]
+    pedidos_usuario = [pedido for pedido in dados_json['pedidos'] if
+                       pedido['passageiro_username'] == request.user.username]
 
     # Criar uma lista de dicionários para representar todos os pedidos
     historico_passageiro_todos = []
@@ -521,13 +509,14 @@ def historico_passageiro(request):
             'destino': pedido['destino'],
             'data': pedido['data_boleia'],
             'hora': pedido['hora_boleia'],
-            'aceito': pedido.get('aceito', False),  
-            }
+            'aceito': pedido.get('aceito', False),
+        }
         historico_passageiro_todos.append(dados_boleia)
 
     # Separar os dados em aceitas e recusadas
     historico_passageiro_aceitas = [pedido for pedido in historico_passageiro_todos if pedido['aceito']]
-    historico_passageiro_recusadas = [pedido for pedido in historico_passageiro_todos if pedido.get('aceito', False) is False]
+    historico_passageiro_recusadas = [pedido for pedido in historico_passageiro_todos if
+                                      pedido.get('aceito', False) is False]
 
     context = {
         'historico_passageiro_aceitas': historico_passageiro_aceitas,
@@ -540,7 +529,7 @@ def historico_passageiro(request):
 @login_required(login_url='/login/')
 def tenho_interesse_boleia(request, boleia_id):
     """
-    Registra o interesse de um passageiro em uma boleia e envia um email ao motorista.
+    Registra o interesse de um passageiro que não estou bloqueado do utilizador em uma boleia e envia um email ao motorista.
 
     Parameters:
     - request (HttpRequest): O objeto de solicitação HTTP.
@@ -556,6 +545,12 @@ def tenho_interesse_boleia(request, boleia_id):
     if boleia.user == request.user:
         return JsonResponse({'success': False, 'message': 'Você não pode solicitar uma boleia para você mesmo.'})
 
+    # Verifica se o user bloqueou o motorista da boleia ou foi bloqueado por ele
+    if UserBlock.objects.filter(blocker=request.user, blocked=boleia.user).exists() or \
+            UserBlock.objects.filter(blocker=boleia.user, blocked=request.user).exists():
+        return JsonResponse(
+            {'success': False, 'message': 'Nao pode solicitar interesse nesta boleia devido a restrições de bloqueio.'})
+
     try:
         # Verificar se o usuário já fez um pedido para esta boleia
         pedido_existente = PedidoBoleia.objects.filter(boleia=boleia, passageiro=request.user).first()
@@ -563,15 +558,19 @@ def tenho_interesse_boleia(request, boleia_id):
         if pedido_existente:
             # Verificar se o pedido anterior foi aceito, recusado ou ainda está pendente
             if pedido_existente.aceito is True:
-                return JsonResponse({'success': False, 'message': 'Você já fez um pedido para esta boleia e ele foi aceito.'})
+                return JsonResponse(
+                    {'success': False, 'message': 'Você já fez um pedido para esta boleia e ele foi aceito.'})
             elif pedido_existente.aceito is False:
-                return JsonResponse({'success': False, 'message': 'Você já fez um pedido para esta boleia e ele foi recusado.'})
+                return JsonResponse(
+                    {'success': False, 'message': 'Você já fez um pedido para esta boleia e ele foi recusado.'})
             else:
-                return JsonResponse({'success': False, 'message': 'Você já fez um pedido para esta boleia anteriormente.'})
+                return JsonResponse(
+                    {'success': False, 'message': 'Você já fez um pedido para esta boleia anteriormente.'})
         else:
             # Verificar se o número de vagas disponíveis já foi preenchido
             if boleia.vagas_ocupadas >= boleia.vagas_disponiveis:
-                return JsonResponse({'success': False, 'message': 'Desculpe, o número de passageiros já foi preenchido.'})
+                return JsonResponse(
+                    {'success': False, 'message': 'Desculpe, o número de passageiros já foi preenchido.'})
 
             pedido = PedidoBoleia.objects.create(boleia=boleia, passageiro=request.user)
             # Enviar e-mail ao motorista
@@ -584,7 +583,9 @@ def tenho_interesse_boleia(request, boleia_id):
 
             send_mail(subject, message, from_email, [to_email], fail_silently=False)
 
-            return JsonResponse({'success': True, 'message': 'Pedido de boleia enviado com sucesso. Aguarde a resposta do motorista.'})
+            return JsonResponse(
+                {'success': True, 'message': 'Pedido de boleia enviado com sucesso. Aguarde a resposta do motorista.'})
 
     except Exception as e:
-        return JsonResponse({'success': False, 'message': f'Ocorreu um erro ao enviar o pedido de boleia. Detalhes: {e}'})
+        return JsonResponse(
+            {'success': False, 'message': f'Ocorreu um erro ao enviar o pedido de boleia. Detalhes: {e}'})
