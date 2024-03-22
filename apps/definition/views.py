@@ -1,8 +1,18 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from apps.definition.models import UserProfile
+from apps.definition.models import UserProfile, UserBlock
 from apps.definition.forms import UserProfileForm
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import UserProfile, AvaliacaoUsuario
+from django.contrib.auth.models import User
+from .forms import AvaliacaoForm
+from django.shortcuts import render, get_object_or_404
+from .models import UserProfile, AvaliacaoUsuario
+from django.contrib.auth.models import User
+from .forms import AvaliacaoForm
+from .forms import SearchForm
+
 
 @login_required()
 def edit_profile(request):
@@ -21,6 +31,7 @@ def edit_profile(request):
 
     return render(request, 'definition/edit_profile.html', {'form': form})
 
+
 @login_required()
 def view_profile(request):
     # Get or create UserProfile instance for the current user
@@ -28,8 +39,9 @@ def view_profile(request):
 
     # Redirect to the perfil_usuario view with the current user's username
     return redirect('definition:perfil_usuario', username=request.user.username)
-    
-#lucas
+
+
+# lucas
 from django.shortcuts import render, get_object_or_404
 from .models import UserProfile, AvaliacaoUsuario
 from django.contrib.auth.models import User
@@ -57,10 +69,7 @@ def perfil_usuario(request, username):
 
     return render(request, 'definition/perfil_usuario.html', context)
 '''
-from django.shortcuts import render, get_object_or_404
-from .models import UserProfile, AvaliacaoUsuario
-from django.contrib.auth.models import User
-from .forms import AvaliacaoForm
+
 
 @login_required()
 def perfil_usuario(request, username):
@@ -73,20 +82,21 @@ def perfil_usuario(request, username):
 
     boleias_ativas = perfil.boleias_ativas()
 
+
+    # Verificar se o utiizador bloqueou o utilizador que está a visitar
+    is_blocked = UserBlock.objects.filter(blocker=request.user, blocked=perfil.user_id).exists()
+
     context = {
         'perfil': perfil,
         'avaliacoes': avaliacoes,
         'boleias_ativas': boleias_ativas,
         'form': form,
+        'is_blocked': is_blocked,
     }
 
     return render(request, 'definition/perfil_usuario.html', context)
 
-# views.py
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import UserProfile, AvaliacaoUsuario
-from django.contrib.auth.models import User
-from .forms import AvaliacaoForm
+
 @login_required()
 def salvar_avaliacao(request, username):
     if request.method == 'POST':
@@ -115,7 +125,6 @@ def salvar_avaliacao(request, username):
 
     return redirect('definition:perfil_usuario', username=username)
 
-from .forms import SearchForm
 
 @login_required()
 def search_users(request):
@@ -128,3 +137,17 @@ def search_users(request):
         results = User.objects.filter(username__icontains=search_query)
 
     return render(request, 'definition/search_results.html', {'form': form, 'results': results})
+
+# Bloquear utilizador
+@login_required()
+def block_users(request, user_id):
+    user_to_block = get_object_or_404(User, pk=user_id)
+    UserBlock.objects.get_or_create(blocker=request.user, blocked=user_to_block)
+    return redirect('definition:perfil_usuario', username=user_to_block.username)
+
+# Desbloquear utilizador
+@login_required()
+def unblock_users(request, user_id):
+    user_to_unblock = get_object_or_404(User, pk=user_id)
+    UserBlock.objects.filter(blocker=request.user, blocked=user_to_unblock).delete()
+    return redirect('definition:perfil_usuario', username=user_to_unblock.username)

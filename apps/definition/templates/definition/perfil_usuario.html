@@ -161,6 +161,14 @@
                         <button class="button-icon" onclick="onButtonClick('{{ user.id }}', '{{ perfil.user_id.id }}')">
                             <i class='bx bx-chat icon'></i>
                         </button>
+
+                        {% if is_blocked %}
+                        <!-- Botão para desbloquear -->
+                            <a href="{% url 'definition:unblock_users' perfil.user_id.id%}" class="botao-tabela">Desbloquear</a>
+                        {% else %}
+                        <!--Botão para bloquear-->
+                            <a href="{% url 'definition:block_users' perfil.user_id.id %}" class="botao-tabela">Bloquear</a>
+                        {% endif %}
                     {% endif %}
                 </div>
                 
@@ -173,7 +181,8 @@
         </div>
         
         <div class="avaliationposition">
-            {% if user != perfil.user_id %}
+            <!-- Se o perfil estiver bloqueado não pode fazer comentários no utilizador que bloqueou e nem visualizar os comentários-->
+            {% if user != perfil.user_id  and not is_blocked %}
                 <div class="avaliacao-form">
                     <h2>Deixe sua avaliação:</h2>
                     <br>

@@ -57,3 +57,14 @@ class AvaliacaoUsuario(models.Model):
 
     def __str__(self):
         return f"Avaliação de {self.avaliador.username} para {self.usuario_avaliado.username}"
+
+# Modelo para usuario ser bloqueado ou desbloqueado para somente que o utilizador que bloqueou
+class UserBlock(models.Model):
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocking')
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocked_by')
+
+    class Meta:
+        unique_together = ('blocker', 'blocked')
+
+    def __str__(self):
+        return f"{self.blocker.username} bloqueou {self.blocked.username}"
