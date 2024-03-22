@@ -10,7 +10,7 @@ from traitlets import default
 # Create your models here.
 class UserProfile(models.Model):
     user_id = models.OneToOneField(User, on_delete=models.CASCADE)
-    photo = models.ImageField(upload_to='media/profile_photos/', blank=True, null=True)
+    photo = models.ImageField(upload_to='media/profile_photos/', default='media/profile_photos/default.png', blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     description = models.TextField(blank=True, null=True, default="Eu uso a Uniway!")
     media_avaliacoes = models.FloatField(default=0)
@@ -38,7 +38,7 @@ class UserProfile(models.Model):
         return self.user_id.username
 
     def get_default_photo_url(self):
-        return '/media/media/profile_photos/photo_perfil.jpg'
+        return '/media/media/profile_photos/default.png'
 
     def boleias_ativas(self):
         from apps.addboleia.models import Boleia
