@@ -232,7 +232,8 @@
             <div class="name-and-button">
                 <h2>{{ perfil.user_id.get_full_name }}</h2>
                 {% if user != perfil.user_id %}
-                <button class="button-icon" onclick="onButtonClick('{{ user.id }}', '{{ perfil.user_id.id }}')">
+                <button class="button-icon" id="create-chat-button" data-user-id="{{ user.id }}"
+                        data-boleia-user-id="{{ perfil.user_id.id }}">
                     <i class='bx bx-chat icon'></i>
                 </button>
 
@@ -327,8 +328,12 @@
 
 <div id="load-more" title="Carrega mais" style="font-size: 30px; text-align: center;"><b>. . .</b></div>
 <br>
+
 <script>
-    function onButtonClick(userId, boleiaUserId) {
+    $(document).on('click', '#create-chat-button', function () {
+        var userId = $(this).data('user-id');
+        var boleiaUserId = $(this).data('boleia-user-id');
+
         console.log("Button clicked!");
 
         $.ajax({
@@ -342,17 +347,15 @@
         })
             .done(function (data) {
                 console.log("Chat room created successfully!", data);
-                console.log("Redirecting to:", data.room_url);
                 if (data.room_url) {
                     window.location.href = data.room_url;
                 }
             })
-
             .fail(function (jqXHR, textStatus, errorThrown) {
                 console.error("Error creating chat room:", textStatus, errorThrown);
                 alert("Error creating chat room: " + textStatus);
             });
-    }
+    });
 
     document.addEventListener("DOMContentLoaded", function () {
         var container = document.getElementById("boleias-container");
