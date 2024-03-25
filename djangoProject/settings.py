@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+from celery.schedules import crontab
 from environ import Env
 from pathlib import Path
 import os
@@ -33,10 +34,9 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*','uniway.gis4cloud.com']
+ALLOWED_HOSTS = ['*', 'uniway.gis4cloud.com']
 
-CSRF_TRUSTED_ORIGINS = ['https://uniway.gis4cloud.com','https://*.127.0.0.1']
-
+CSRF_TRUSTED_ORIGINS = ['https://uniway.gis4cloud.com', 'https://*.127.0.0.1']
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
@@ -122,7 +122,6 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -196,3 +195,22 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Configuração do Celery
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Mudar para o localhost correto
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULE = {
+    # Execute diariamente a task à meia-noite
+    'check_and_notify_inactive_users': {
+        'task': 'accounts.tasks.check_and_notify_inactive_users',
+        'schedule': crontab(hour=0, minute=0),
+    },
+    'delete_inactive_accounts': {
+        'task': 'accounts.tasks.delete_inactive_accounts',
+        'schedule': crontab(hour='1', minute='0'),
+    }
+}

@@ -1,5 +1,11 @@
 # import re
+from datetime import datetime
+
+from django.contrib.auth.models import AbstractUser, User
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.signals import user_logged_in
 
 '''
 # Create your models here.
@@ -156,3 +162,33 @@ class User(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
         super(User, self).save(*args, **kwargs)'''
+
+
+class CustomUser(User):
+    inactivity_date = models.DateTimeField(null=True, blank=True)
+
+@receiver(user_logged_in)
+def update_inactivity_date(sender, user, request, **kwargs):
+    """
+    Atualiza a inactivity_date quando o user realiza um login
+    :param sender:
+    :param user:
+    :param request:
+    :param kwargs:
+    :return:
+    """
+    user.customuser.inactivity_date = datetime.now()
+    user.customuser.save()
+
+@receiver(post_save, sender=CustomUser)
+def update_inactivity_date_on_reset(sender, instance, **kwargs):
+    """
+    Atualiza a inactivity_date quando o user altera a senha
+    :param sender:
+    :param instance:
+    :param kwargs:
+    :return:
+    """
+    if kwargs.get('update_fields') and 'password' in kwargs.get('update_fields'):
+        instance.inactivity_date = datetime.now()
+        instance.save()

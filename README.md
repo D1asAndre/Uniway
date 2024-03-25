@@ -33,6 +33,15 @@ Estar no directorio principal onde se encontra o manage.py -> \djangoProject
 E inserir o seguinte código -> python run_huey.py;
 
 3º
+Estar no directorio principal 
+E inserir o seguinte comando 
+- Iniciar o worker do Celery
+celery -A your_project_name worker -l info
+
+- Em outro terminal, iniciar o beat do Celery
+celery -A your_project_name beat -l info
+
+4º
 *(Este topico é importante para que o servidor esteja na porta correta)*
 Com isto tudo realizado podemos dar runserver ao servidor, deve estar no directorio \djangoProject
 
