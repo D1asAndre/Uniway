@@ -15,6 +15,7 @@ urlpatterns = [
     path('pedidos_do_motorista/', views.pedidos_do_motorista, name='pedidos_do_motorista'),
     path('pedidos_do_passageiro/', views.pedidos_do_passageiro, name='pedidos_do_passageiro'),
     path('cancelar_boleia_ajax/<int:boleia_id>/', views.cancelar_boleia_ajax, name='cancelar_boleia_ajax'),
+    path('cancelar_boleia_passageiro/<int:boleia_id>/', views.cancelar_pedido_passageiro, name='cancelar_boleia_passageiro'),
     path('finalizar_boleia_ajax/<int:boleia_id>/', views.finalizar_boleia_ajax, name='finalizar_boleia_ajax'),
     path('historico_motorista/', views.historico_motorista, name='historico_motorista'),
     path('historico_passageiro/', views.historico_passageiro, name='historico_passageiro'),

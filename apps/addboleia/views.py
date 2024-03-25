@@ -356,6 +356,58 @@ def pedidos_do_motorista(request):
     )
 
 
+@login_required()
+def cancelar_pedido_passageiro(request, pedido_id):
+    """
+    Permite que o passageiro cancele seu pedido de boleia.
+
+    Parameters:
+    - request (HttpRequest): O objeto de solicitação HTTP.
+    - pedido_id (int): O ID do pedido de boleia a ser cancelado.
+
+    Returns:
+    - JsonResponse: Resposta JSON indicando o sucesso ou falha da operação.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'message': 'Usuário não autenticado'})
+
+    pedido = get_object_or_404(PedidoBoleia, id=pedido_id, passageiro=request.user)
+
+    # Verifica se o pedido não foi aceito ou ainda está pendente
+    if pedido.aceito is not True:
+        return JsonResponse({'success': False, 'message': 'Não é possível cancelar um pedido não aceito ou já cancelado'})
+
+    boleia = pedido.boleia
+    boleia.vagas_disponiveis += 1
+    boleia.save()
+
+    # Enviar email ao motorista
+    motorista_email = boleia.user.email
+    subject = 'Pedido de Boleia Cancelado'
+    plain_message = (
+        f"Exmo. Senhor Condutor {boleia.user.username},"
+        f"Viemos informar que o passssageiro {request.user.username} cancelou o pedido para a boleia com origem {boleia.origem} e"
+        f"destino {boleia.destino}, marcada para {boleia.data.strftime('%d/%m/%Y')} às {boleia.hora.strftime('%H:%M')}"
+    )
+    send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, [motorista_email])
+
+    # Registar o cancelamento no histórico do passageiro
+    HistoricoBoleia.objects.create(
+        user=request.user,
+        origem=boleia.origem,
+        destino=boleia.destino,
+        vagas_disponiveis=boleia.vagas_disponiveis,
+        vagas_ocupadas=boleia.vagas_ocupadas,
+        data=boleia.data,
+        hora=boleia.hora,
+        cancelada=True
+    )
+
+    # Cencela o pedido efetivamente
+    pedido.delete()
+
+    return JsonResponse({'success': True, 'message':'Pedido cancelado com sucesso'})
+
 @login_required(login_url='/login/')
 def pedidos_do_passageiro(request):
     # Obter pedidos do passageiro logado
@@ -549,7 +601,8 @@ def tenho_interesse_boleia(request, boleia_id):
     if UserBlock.objects.filter(blocker=request.user, blocked=boleia.user).exists() or \
             UserBlock.objects.filter(blocker=boleia.user, blocked=request.user).exists():
         return JsonResponse(
-            {'success': False, 'message': 'Nao pode solicitar interesse nesta boleia devido a restrições de bloqueio.'})
+            {'success': False,
+             'message': 'Nao pode solicitar interesse nesta boleia devido a restrições de bloqueio.'})
 
     try:
         # Verificar se o usuário já fez um pedido para esta boleia
@@ -584,7 +637,8 @@ def tenho_interesse_boleia(request, boleia_id):
             send_mail(subject, message, from_email, [to_email], fail_silently=False)
 
             return JsonResponse(
-                {'success': True, 'message': 'Pedido de boleia enviado com sucesso. Aguarde a resposta do motorista.'})
+                {'success': True,
+                 'message': 'Pedido de boleia enviado com sucesso. Aguarde a resposta do motorista.'})
 
     except Exception as e:
         return JsonResponse(
